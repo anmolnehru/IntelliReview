@@ -1,0 +1,63 @@
+File: .gitignore
+Changes: @@ -0,0 +1 @@
++secrets.yml
+File: main.py
+Changes: @@ -0,0 +1,55 @@
++import requests
++import yaml
++import sys
++
++with open("secrets.yml", "r") as file:
++    secrets = yaml.safe_load(file)
++GITHUB_TOKEN = secrets["GITHUB_TOKEN"]
++
++GITHUB_API_URL = "https://api.github.com"
++
++REPO_OWNER = "anmolnehru"
++REPO_NAME = "IntelliReview"
++
++def get_latest_commit(branch="main"):
++    url = f"{GITHUB_API_URL}/repos/{REPO_OWNER}/{REPO_NAME}/commits?sha={branch}"
++    headers = {
++        "Authorization": f"token {GITHUB_TOKEN}"
++    }
++    response = requests.get(url, headers=headers)
++    if response.status_code == 200:
++        commits = response.json()
++        latest_commit = commits[0]  # Get the most recent commit
++        return latest_commit
++    else:
++        print(f"Failed to fetch commits: {response.status_code}")
++        return None
++
++def get_pull_requests():
++    url = f"{GITHUB_API_URL}/repos/{REPO_OWNER}/{REPO_NAME}/pulls"
++    headers = {
++        "Authorization": f"token {GITHUB_TOKEN}"
++    }
++    response = requests.get(url, headers=headers)
++    if response.status_code == 200:
++        pull_requests = response.json()
++        return pull_requests
++    else:
++        print(f"Failed to fetch pull requests: {response.status_code}")
++        return None
++
++if __name__ == "__main__":
++    branch_name = sys.argv[1]
++    latest_commit = get_latest_commit(branch_name)
++    if latest_commit:
++        print("Latest Commit:")
++        print(f"SHA: {latest_commit['sha']}")
++        print(f"Message: {latest_commit['commit']['message']}")
++        print(f"Author: {latest_commit['commit']['author']['name']}")
++
++
++    pull_requests = get_pull_requests()
++    if pull_requests:
++        print("\nOpen Pull Requests:")
++        for pr in pull_requests:
++            print(f"PR #{pr['number']}: {pr['title']} by {pr['user']['login']}")
+
+Open Pull Requests:
+PR #1: Fetch git commit/PR by anmolnehru
