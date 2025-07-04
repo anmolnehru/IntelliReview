@@ -1,0 +1,36 @@
+Latest PR #2: Get diff from PR by haverma
+Description: None
+
+diff --git a/main.py b/main.py
+index 1aeda59..12314da 100644
+--- a/main.py
++++ b/main.py
+@@ -38,6 +38,25 @@ def get_pull_requests():
+         print(f"Failed to fetch pull requests: {response.status_code}")
+         return None
+ 
++def generate_pr_diff_text(files) -> str:
++    """
++    Given a list of GitHub Pull Request files (PyGithub File objects),
++    extract and combine their diffs (patches) into a single string.
++
++    Args:
++        files: Iterable of PyGithub PullRequestFile objects
++
++    Returns:
++        str: Combined unified diff text of all files with patches
++    """
++    diffs = []
++    for file in files:
++        if file.patch:  # Some files might not have a patch (e.g., binary files)
++            diffs.append(f"File: {file.filename}\n{file.patch}")
++
++    return "\n\n".join(diffs)
++
++
+ if __name__ == "__main__":
+     branch_name = sys.argv[1]
+     latest_commit = get_latest_commit(branch_name)
+
+
+Latest Pull Request:
