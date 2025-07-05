@@ -4,6 +4,9 @@ import sys
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
+from IntelliReview.llm.base import LLMBase
+from IntelliReview.llm.openai_wrapper import OpenAIWrapper
+
 with open("secrets.yml", "r") as file:
     secrets = yaml.safe_load(file)
 GITHUB_TOKEN = secrets["GITHUB_TOKEN"]
@@ -30,10 +33,13 @@ def get_latest_commit_contents(branch="main"):
         if commit_response.status_code == 200:
             commit_details = commit_response.json()
             files = commit_details.get("files", [])
+            diff_output = ""
             for file in files:
-                print(f"File: {file['filename']}")
-                print(f"Changes: {file['patch']}")
-            return commit_details
+                filename = file["filename"]
+                patch = file.get("patch", "")  # sometimes 'patch' may be missing
+                diff_output += f"File: {filename}\n"
+                diff_output += f"Changes:\n{patch}\n\n"
+            return diff_output if diff_output.strip() else None
         else:
             print(f"Failed to fetch commit details: {commit_response.status_code}")
             return None
@@ -74,8 +80,12 @@ def get_latest_pull_request(input_pr_number=None):
     if response.status_code == 200:
         pull_requests = response.json()
         if pull_requests:
+            matching_pr = None
             if input_pr_number:
-                matching_pr = next((pr for pr in pull_requests if pr.get("number") == input_pr_number), None)
+                for pr in pull_requests:
+                    if pr["number"] == input_pr_number:
+                        matching_pr = pr
+                        break
             else:
                 matching_pr = pull_requests[0]  # Get the most recent pull request
             if not matching_pr:
@@ -102,42 +112,11 @@ def get_latest_pull_request(input_pr_number=None):
         print(f"Failed to fetch pull requests: {response.status_code}")
     return None
 
-def generate_review_from_diff(llm_input, raw_pr_text):
-    """
-    Given an LLM and raw pull request text (with diff and metadata),
-    extract the unified diff and return LLM-generated review comments.
-
-    Args:
-        llm_input: A LangChain-compatible LLM instance (e.g., ChatOpenAI)
-        raw_pr_text: Raw PR content (including diff)
-
-    Returns:
-        str: LLM-generated review comments
-    """
-    prompt = PromptTemplate.from_template("""
-You are a very experienced software engineer performing a thorough code review on the following GitHub pull request diff:
-
-{diff}
-
-Please provide detailed, constructive review comments including:
-- Potential bugs or logical errors
-- Code style and formatting issues
-- Best practices violations
-- Suggestions for improving readability, performance, or security
-- Anything unusual or risky
-
-Do NOT just say 'No issues found' unless the code is absolutely perfect.
-    """)
-
-    chain = prompt | llm_input
-    return chain.invoke({"diff": raw_pr_text})
+def generate_review_from_diff(llm: LLMBase, raw_pr_text: str):
+    return llm.invoke({"diff": raw_pr_text})
 
 if __name__ == "__main__":
-    llm = ChatOpenAI(
-        openai_api_key=OPEN_AI_KEY,
-        model_name="gpt-4o",
-        temperature=0.3
-    )
+    llm = OpenAIWrapper(api_key=OPEN_AI_KEY)
     # get latest pull-request by default if no params
     if len(sys.argv) < 2 or sys.argv[1] == "pull":
         pr_number_input = input("Enter the PR number you want to fetch: ").strip()
@@ -158,9 +137,13 @@ if __name__ == "__main__":
 
     branch_name = "main"
     if sys.argv[1] == "commit":
-        latest_commit_contents = get_latest_commit_contents(branch_name)
         if len(sys.argv) > 2:
             branch_name = sys.argv[2]
+        latest_commit_contents = get_latest_commit_contents(branch_name)
+        print(f"\nLatest Commit on this branch:\n {latest_commit_contents}")
+        review = generate_review_from_diff(llm, latest_commit_contents)
+        print("🔍 Review Comments:\n")
+        print(review.content)
     else:
         sys.exit(f"Error: Unsupported argument '{sys.argv[1]}'. Only 'pull/commit' is allowed.")
 
