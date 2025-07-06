@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/70b03ea4-743f-484f-9560-5930d4e66ab3)
+
 # 🤖 PR Code Reviewer with LangChain + GitHub + VectorDB
 
 A  project that automates pull request (PR) code reviews using Large Language Models (LLMs), code embeddings, and GitHub integration. This app fetches PRs from GitHub, retrieves relevant context using a vector database of code embeddings, and generates insightful code review feedback using an LLM.
@@ -25,8 +27,8 @@ A  project that automates pull request (PR) code reviews using Large Language Mo
      (Top-k most relevant code chunks)
                 ↓
          ┌────────────────────────┐
-         │   LangChain LLM    │
-         │  Prompt Template   │
+         │   LangChain LLM        │
+         │  Prompt Template       │
          └────────────────────────┘
                 ↓
         Structured Review Feedback
