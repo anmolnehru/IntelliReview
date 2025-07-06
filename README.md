@@ -5,7 +5,6 @@ A  project that automates pull request (PR) code reviews using Large Language Mo
 ---
 
 ## 🚀 Features
-
 * 🔍 **Automatic PR Fetching** from GitHub repositories
 * 🧠 **Context-aware Code Reviews** using LLMs
 * 🦮 **Code Embeddings with Vector Search** to retrieve relevant code chunks
@@ -53,15 +52,12 @@ A  project that automates pull request (PR) code reviews using Large Language Mo
 .
 ├── .env                          # Environment variables
 ├── main.py                       # Entry point
-├── github_client.py              # GitHub API wrapper
+├── openai_wrapperpy              # OPEN API wrapper
 ├── vector_store.py               # Code embedding and retrieval logic
-├── llm_review.py                 # LangChain code review pipeline
-├── review_templates.py           # Prompt engineering for reviews
 ├── utils.py                      # Helper functions
 ├── README.md
 └── requirements.txt
 ```
-
 ---
 
 ## ⚙️ Setup Instructions
@@ -83,7 +79,7 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file with the following:
+Create a `secrets.yml` file with the following:
 
 ```env
 GITHUB_TOKEN=ghp_XXXXXXXXXXXXXXXXXX
@@ -95,13 +91,13 @@ REPO_URL=https://github.com/anmolnehru/IntelliReview
 ### 4. Run the Application
 
 ```bash
-python main.py --pr_number 123
+python main.py pull $pr_number
 ```
 
 You can also provide multiple PRs:
 
 ```bash
-python main.py --pr_numbers 123 124 125
+python main.py pull $pr_numbers 123 124 125
 ```
 
 ---
